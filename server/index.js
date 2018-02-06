@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
-
+const minimalcss = require('minimalcss');
 const PORT = process.env.PORT || 5000;
 
 // Multi-process to utilize all CPU cores.
@@ -29,8 +29,31 @@ if (cluster.isMaster) {
 
   // Answer API requests.
   app.get('/api', function(req, res) {
-    res.set('Content-Type', 'application/json');
-    res.send('{"message":"Hello from the custom server!"}');
+    minimalcss
+      .minimize({
+        urls: ['https://news.ycombinator.com']
+      })
+      .then(result => {
+        res.set('Content-Type', 'application/json');
+        // res.send('{"message":"Hello from the custom server!"}');
+        res.send(
+          JSON.stringify({
+            finalCss: result.finalCss
+          })
+        );
+        // console.log('OUTPUT', result.finalCss.length, result.finalCss)
+      })
+      .catch(error => {
+        res.set('Content-Type', 'application/json');
+        // res.send('{"message":"Hello from the custom server!"}');
+        console.error(`Failed the minimize CSS: ${error}`);
+        res.send(
+          JSON.stringify({
+            error: error.toString()
+          })
+        );
+        console.error(`Failed the minimize CSS: ${error}`);
+      });
   });
 
   // All remaining requests return the React app, so it can handle routing.
