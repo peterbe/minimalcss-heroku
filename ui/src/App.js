@@ -20,16 +20,18 @@ class App extends Component {
         return response.json();
       })
       .then(json => {
+        console.log('JSON:', json);
         this.setState({
           message: json.message,
           fetching: false
         });
-      }).catch(e => {
+      })
+      .catch(e => {
         this.setState({
           message: `API call failed: ${e}`,
           fetching: false
         });
-      })
+      });
   }
 
   render() {
@@ -43,7 +45,8 @@ class App extends Component {
           {'This is '}
           <a href="https://github.com/mars/heroku-cra-node">
             {'create-react-app with a custom Node/Express server'}
-          </a><br/>
+          </a>
+          <br />
         </p>
         <p className="App-intro">
           {this.state.fetching
