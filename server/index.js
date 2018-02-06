@@ -31,7 +31,8 @@ if (cluster.isMaster) {
   app.get('/api', function(req, res) {
     minimalcss
       .minimize({
-        urls: ['https://news.ycombinator.com']
+        urls: ['https://news.ycombinator.com'],
+        puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
       })
       .then(result => {
         res.set('Content-Type', 'application/json');
@@ -39,6 +40,7 @@ if (cluster.isMaster) {
         res.send(
           JSON.stringify({
             finalCss: result.finalCss
+            // XXX include stats and verbose information
           })
         );
         // console.log('OUTPUT', result.finalCss.length, result.finalCss)
