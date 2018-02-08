@@ -108,22 +108,39 @@ class DisplayResult extends React.PureComponent {
     if (result === null) {
       return null;
     }
+    console.log('RESULT', result);
     if (result.error) {
       return (
         <div className="box">
-          <p>Error...</p>
-          <pre>{result.error}</pre>
+          <h3>Error...</h3>
+          <div className="notification is-danger">
+            <pre>{result.error}</pre>
+          </div>
         </div>
       );
     }
-    console.log('RESULT', result);
     const stylesheetContents = result.result.stylesheetContents;
+    const previousTotalSize = Object.keys(stylesheetContents).reduce(
+      (acc, key) => acc + stylesheetContents[key].length
+    );
     return (
-      <div className="box">
-        <p>Results here...</p>
+      <div className="box" style={{ textAlign: 'left' }}>
+        <h3>Results</h3>
+
+        {/* XXX this is ugly */}
         <div className="css">{result.result.finalCss}</div>
+
         <p>
           <small>Took {formatTime(result.result._took)}</small>
+          <br />
+          <small>Size {formatSize(result.result.finalCss.length)}</small>
+          <br />
+          <small>Size before {formatSize(previousTotalSize)}</small>
+          <br />
+          <small>
+            Size reduction{' '}
+            {formatSize(previousTotalSize - result.result.finalCss.length)}
+          </small>
         </p>
         <h4>Stylesheets</h4>
         <ul>

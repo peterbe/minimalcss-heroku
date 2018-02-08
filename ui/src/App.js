@@ -32,7 +32,7 @@ class App extends React.Component {
                 <div className="navbar-brand">
                   <NavLink className="navbar-item" to="/">
                     <img
-                      src="http://bulma.io/images/bulma-type-white.png"
+                      src="https://bulma.io/images/bulma-type-white.png"
                       alt="Logo"
                     />
                   </NavLink>
