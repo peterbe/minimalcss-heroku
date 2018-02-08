@@ -3,6 +3,8 @@ const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
 const minimalcss = require('minimalcss');
+const puppeteer = require('puppeteer');
+
 const PORT = process.env.PORT || 5000;
 
 // Multi-process to utilize all CPU cores.
@@ -28,11 +30,15 @@ if (cluster.isMaster) {
   app.use(express.static(path.resolve(__dirname, '../ui/build')));
 
   // Answer API requests.
-  app.get('/api', function(req, res) {
-    minimalcss
+  app.get('/api', async function(req, res) {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    await minimalcss
       .minimize({
         urls: ['https://news.ycombinator.com'],
-        puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
+        browser: browser
+        // puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
       })
       .then(result => {
         res.set('Content-Type', 'application/json');
@@ -43,7 +49,7 @@ if (cluster.isMaster) {
             // XXX include stats and verbose information
           })
         );
-        // console.log('OUTPUT', result.finalCss.length, result.finalCss)
+        console.log('OUTPUT', result.finalCss.length, result.finalCss);
       })
       .catch(error => {
         res.set('Content-Type', 'application/json');
@@ -54,7 +60,6 @@ if (cluster.isMaster) {
             error: error.toString()
           })
         );
-        console.error(`Failed the minimize CSS: ${error}`);
       });
   });
 
