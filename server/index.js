@@ -1,9 +1,12 @@
 const express = require('express');
 const path = require('path');
+const bodyParser = require('body-parser');
+const responseTime = require('response-time');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
 const minimalcss = require('minimalcss');
 const puppeteer = require('puppeteer');
+const now = require('performance-now');
 
 const PORT = process.env.PORT || 5000;
 
@@ -26,32 +29,44 @@ if (cluster.isMaster) {
 } else {
   const app = express();
 
+  // This sets an 'X-Response-Time' header to every request.
+  app.use(responseTime());
+
+  // So we can parse JSON bodies
+  app.use(bodyParser());
+
   // Priority serve any static files.
   app.use(express.static(path.resolve(__dirname, '../ui/build')));
 
   // Answer API requests.
-  app.get('/api', async function(req, res) {
+  app.post('/api/minimize', async function(req, res) {
+    const url = req.body.url;
+    // XXX I don't know why you have to create a browser and
+    // send it into minimalcss.minimize(). I tried passing
+    // no browser but set
+    // `puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']` and
+    // that didn't work. Making an explicit puppeteer browser instance works.
     const browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+    const t0 = now();
     await minimalcss
       .minimize({
-        urls: ['https://news.ycombinator.com'],
+        urls: [url],
         browser: browser
         // puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']
       })
       .then(result => {
+        browser.close();
+        const t1 = now();
         res.set('Content-Type', 'application/json');
         // res.send('{"message":"Hello from the custom server!"}');
-        res.send(
-          JSON.stringify({
-            finalCss: result.finalCss
-            // XXX include stats and verbose information
-          })
-        );
-        console.log('OUTPUT', result.finalCss.length, result.finalCss);
+        result._took = t1 - t0;
+        res.send(JSON.stringify({ result }));
+        // console.log('OUTPUT', result.finalCss.length, result.finalCss);
       })
       .catch(error => {
+        browser.close();
         res.set('Content-Type', 'application/json');
         // res.send('{"message":"Hello from the custom server!"}');
         console.error(`Failed the minimize CSS: ${error}`);

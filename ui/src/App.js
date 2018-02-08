@@ -1,61 +1,94 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  NavLink,
+  Switch
+} from 'react-router-dom';
 
-class App extends Component {
+import Home from './Home';
+
+class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      message: null,
-      fetching: true
+      // message: null,
+      // fetching: true
     };
   }
 
-  componentDidMount() {
-    fetch('/api')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(json => {
-        console.log('JSON:', json);
-        this.setState({
-          message: json.message,
-          fetching: false
-        });
-      })
-      .catch(e => {
-        this.setState({
-          message: `API call failed: ${e}`,
-          fetching: false
-        });
-      });
-  }
+  toggleNavbarMenu = event => {
+    event.preventDefault();
+    console.log('work harder');
+  };
 
   render() {
     return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React</h2>
-        </div>
-        <p className="App-intro">
-          {'This is '}
-          <a href="https://github.com/mars/heroku-cra-node">
-            {'create-react-app with a custom Node/Express server'}
-          </a>
-          <br />
-        </p>
-        <p className="App-intro">
-          {this.state.fetching
-            ? 'Fetching message from API'
-            : this.state.message}
-        </p>
-      </div>
+      <Router>
+        <section className="hero is-info is-fullheight">
+          <div className="hero-head">
+            <nav className="navbar">
+              <div className="container">
+                <div className="navbar-brand">
+                  <NavLink className="navbar-item" to="/">
+                    <img
+                      src="http://bulma.io/images/bulma-type-white.png"
+                      alt="Logo"
+                    />
+                  </NavLink>
+                  <span
+                    onClick={this.toggleNavbarMenu}
+                    className="navbar-burger burger"
+                    data-target="navbarMenu"
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                </div>
+                <div id="navbarMenu" className="navbar-menu">
+                  <div className="navbar-end">
+                    <NavLink to="/" className="navbar-item is-active">
+                      Home
+                    </NavLink>
+                    <NavLink to="/about" className="navbar-item">
+                      About minimalcss
+                    </NavLink>
+                    <span className="navbar-item">
+                      <a
+                        className="button is-white is-outlined is-small"
+                        href="https://github.com/peterbe/minimalcss-heroku"
+                      >
+                        <span className="icon">
+                          <i className="fa fa-github" />
+                        </span>
+                        <span>View Source</span>
+                      </a>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </nav>
+          </div>
+          <Switch>
+            <Route path="/" exact component={Home} />
+            {/* <Redirect from="/old-match" to="/will-match"/> */}
+            {/* <Route path="/will-match" component={WillMatch}/> */}
+            <Route component={NoMatch} />
+          </Switch>
+          HOME
+        </section>
+      </Router>
     );
   }
 }
 
 export default App;
+
+const NoMatch = ({ location }) => (
+  <div>
+    <h3>
+      No match for <code>{location.pathname}</code>
+    </h3>
+  </div>
+);
