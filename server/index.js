@@ -7,8 +7,17 @@ const numCPUs = require('os').cpus().length;
 const minimalcss = require('minimalcss');
 const puppeteer = require('puppeteer');
 const now = require('performance-now');
+const prettier = require('prettier');
+const LRU = require('lru-cache');
 
 const PORT = process.env.PORT || 5000;
+
+const LRUCache = LRU({
+  max: 10,
+  // length: function (n, key) { return n * 2 + key.length }
+  // , dispose: function (key, n) { n.close() }
+  maxAge: 1000 * 60 * 60
+});
 
 // Multi-process to utilize all CPU cores.
 if (cluster.isMaster) {
@@ -41,6 +50,13 @@ if (cluster.isMaster) {
   // Answer API requests.
   app.post('/api/minimize', async function(req, res) {
     const url = req.body.url;
+    res.set('Content-Type', 'application/json');
+
+    const cached = LRUCache.get(url);
+    if (cached) {
+      res.send(cached);
+      return;
+    }
     // XXX I don't know why you have to create a browser and
     // send it into minimalcss.minimize(). I tried passing
     // no browser but set
@@ -59,16 +75,20 @@ if (cluster.isMaster) {
       .then(result => {
         browser.close();
         const t1 = now();
-        res.set('Content-Type', 'application/json');
-        // res.send('{"message":"Hello from the custom server!"}');
         result._took = t1 - t0;
+        try {
+          result._prettier = prettier.format(result.finalCss, {
+            parser: 'css'
+          });
+        } catch (ex) {
+          result._prettier_error = ex.toString();
+        }
+        LRUCache.set(url, JSON.stringify({ result }));
+        result._cache_miss = true;
         res.send(JSON.stringify({ result }));
-        // console.log('OUTPUT', result.finalCss.length, result.finalCss);
       })
       .catch(error => {
         browser.close();
-        res.set('Content-Type', 'application/json');
-        // res.send('{"message":"Hello from the custom server!"}');
         console.error(`Failed the minimize CSS: ${error}`);
         res.send(
           JSON.stringify({

@@ -6,7 +6,9 @@ import {
   Switch
 } from 'react-router-dom';
 
+import './App.css';
 import Home from './Home';
+import About from './About';
 
 class App extends React.Component {
   constructor(props) {
@@ -73,7 +75,7 @@ class App extends React.Component {
           <Switch>
             <Route path="/" exact component={Home} />
             {/* <Redirect from="/old-match" to="/will-match"/> */}
-            {/* <Route path="/will-match" component={WillMatch}/> */}
+            <Route path="/about" component={About} />
             <Route component={NoMatch} />
           </Switch>
           HOME
