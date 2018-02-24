@@ -1,5 +1,9 @@
 import React from 'react';
+import PrismCode from 'react-prism';
+// eslint-disable-next-line
+import { Prism } from 'prismjs';
 import './Home.css';
+import 'prismjs/themes/prism-tomorrow.css';
 
 function getQueryVariable(query, variable) {
   var vars = query.substring(1, query.length).split('&');
@@ -30,11 +34,14 @@ class Home extends React.Component {
     }
   }
 
-  // componentWillReceiveProps(nextProps) {
-  //   // will be true
-  //   const locationChanged = nextProps.location !== this.props.location;
-  //   console.log('locationChanged', locationChanged);
-  // }
+  componentWillReceiveProps(nextProps) {
+    // will be true
+    const locationChanged = nextProps.location !== this.props.location;
+    if (locationChanged && this.state.result) {
+      this.setState({ result: null });
+    }
+    // console.log('locationChanged', locationChanged);
+  }
 
   fetchResult = url => {
     if (!url.trim()) {
@@ -84,25 +91,22 @@ class Home extends React.Component {
     this.props.history.push(newPath);
     return this.fetchResult(url);
   };
-
   render() {
     return (
-      <div className="hero-body">
-        <div className="container has-text-centered">
-          <div className="column is-6 is-offset-3">
-            <h1 className="title">
-              Try <code>minimalcss</code>
-            </h1>
-            <h2 className="subtitle">
-              Enter a URL and we'll give you the minimal CSS needed to load this
-              page.
-            </h2>
-            <div className="box">
-              <form method="get" onSubmit={this.submitForm}>
+      <div>
+        <div className="hero-cta">
+          <nav className="level">
+            <div className="level-item has-text-centered">
+              {/* <p>Enter the URL of a site that has a lot of CSS</p> */}
+              <form
+                method="get"
+                onSubmit={this.submitForm}
+                style={{ width: '55%' }}
+              >
                 <div className="field is-grouped">
                   <p className="control is-expanded">
                     <input
-                      className="input"
+                      className="input is-medium"
                       type="url"
                       ref="url"
                       defaultValue="https://news.ycombinator.com"
@@ -112,7 +116,11 @@ class Home extends React.Component {
                   <p className="control">
                     <button
                       type="submit"
-                      className="button is-info"
+                      className={
+                        this.state.fetching
+                          ? 'button is-info is-medium is-loading'
+                          : 'button is-info is-medium'
+                      }
                       disabled={this.state.fetching}
                     >
                       Go!
@@ -121,7 +129,10 @@ class Home extends React.Component {
                 </div>
               </form>
             </div>
-
+          </nav>
+        </div>
+        <div className="section main">
+          <div className="container">
             {this.state.fetching ? <DisplayFetching /> : null}
             <DisplayResult result={this.state.result} />
           </div>
@@ -147,11 +158,10 @@ class DisplayResult extends React.PureComponent {
     if (result === null) {
       return null;
     }
-    console.log('RESULT', result);
     if (result.error) {
       return (
         <div className="box">
-          <h3>Error...</h3>
+          <h3 className="title">Error...</h3>
           <div className="notification is-danger">
             <pre>{result.error}</pre>
           </div>
@@ -171,60 +181,81 @@ class DisplayResult extends React.PureComponent {
 
     return (
       <div className="box" style={{ textAlign: 'left' }}>
-        <h3>Results</h3>
-        <p>
+        <h3 className="title is-3">Results</h3>
+        <div className="buttons">
           <button
             type="button"
+            className="button is-rounded"
             onClick={this.toggleShowPrettier}
             disabled={!this.state.showPrettier}
           >
             Raw CSS
           </button>
-          {' | '}
           <button
             type="button"
+            className="button is-rounded"
             onClick={this.toggleShowPrettier}
             disabled={this.state.showPrettier}
           >
             Pretty CSS
           </button>
-        </p>
+        </div>
 
         {/* XXX this is ugly */}
-        <pre className="css">
+        <PrismCode component="pre" className="language-css">
           {this.state.showPrettier
             ? result.result._prettier
             : result.result.finalCss}
-        </pre>
+        </PrismCode>
 
-        <p>
-          <small>Took {formatTime(result.result._took)}</small>
-          <br />
-          <small>Size {formatSize(newTotalSize)}</small>
-          <br />
-          <small>Size before {formatSize(previousTotalSize)}</small>
-          <br />
-          <small>
-            Size reduction {formatSize(previousTotalSize - newTotalSize)}
-          </small>
-        </p>
-        <h3>Stylesheets</h3>
-        <table style={{ width: '100%' }}>
-          <tbody>
-            {Object.keys(stylesheetContents).map(url => {
-              return (
-                <tr key={url}>
-                  <td>
-                    <a href={url}>{url}</a>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <b>{formatSize(stylesheetContents[url].length)}</b>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="content">
+          <table className="table">
+            <tbody>
+              <tr>
+                <th>Took</th>
+                <td>{formatTime(result.result._took)}</td>
+              </tr>
+              <tr>
+                <th>Size (minimal)</th>
+                <td>
+                  <strong>{formatSize(newTotalSize)}</strong>
+                </td>
+              </tr>
+              <tr>
+                <th>Total size (before)</th>
+                <td>{formatSize(previousTotalSize)}</td>
+              </tr>
+              <tr>
+                <th>Size reduction</th>
+                <td>
+                  <strong>
+                    {formatSize(previousTotalSize - newTotalSize)}
+                  </strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="content">
+          <h4 className="title is-4">Stylesheets</h4>
+          <table className="table">
+            <tbody>
+              {Object.keys(stylesheetContents).map(url => {
+                return (
+                  <tr key={url}>
+                    <td>
+                      <a href={url}>{url}</a>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <b>{formatSize(stylesheetContents[url].length)}</b>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
