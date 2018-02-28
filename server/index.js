@@ -9,6 +9,7 @@ const puppeteer = require('puppeteer');
 const now = require('performance-now');
 const prettier = require('prettier');
 const LRU = require('lru-cache');
+const compression = require('compression');
 
 const PORT = process.env.PORT || 5000;
 
@@ -42,7 +43,10 @@ if (cluster.isMaster) {
   app.use(responseTime());
 
   // So we can parse JSON bodies
-  app.use(bodyParser());
+  app.use(express.json());
+
+  // compress all responses
+  app.use(compression());
 
   // Priority serve any static files.
   app.use(express.static(path.resolve(__dirname, '../ui/build')));
