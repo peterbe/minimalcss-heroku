@@ -20,7 +20,8 @@ class Home extends React.Component {
     super(props);
     this.state = {
       result: null,
-      fetching: false
+      fetching: false,
+      errorMessage: null
     };
   }
 
@@ -60,21 +61,26 @@ class Home extends React.Component {
       }
     })
       .then(response => {
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
+        if (response.ok) {
+          response.json().then(json => {
+            console.log('JSON:', json);
+            this.setState({
+              result: json,
+              fetching: false,
+              errorMessage: null
+            });
+          });
+        } else {
+          console.log('Setting message');
+          this.setState({
+            errorMessage: `Server request failure (status=${response.status})`,
+            fetching: false
+          });
         }
-        return response.json();
-      })
-      .then(json => {
-        console.log('JSON:', json);
-        this.setState({
-          result: json,
-          fetching: false
-        });
       })
       .catch(e => {
         this.setState({
-          message: `API call failed: ${e}`,
+          errorMessage: `API call failed: ${e}`,
           fetching: false
         });
       });
@@ -134,7 +140,11 @@ class Home extends React.Component {
         <div className="section main">
           <div className="container">
             {this.state.fetching ? <DisplayFetching /> : null}
-            <DisplayResult result={this.state.result} />
+            {this.state.errorMessage ? (
+              <DisplayErrorMessage message={this.state.errorMessage} />
+            ) : (
+              <DisplayResult result={this.state.result} />
+            )}
           </div>
         </div>
       </div>
@@ -143,6 +153,19 @@ class Home extends React.Component {
 }
 
 export default Home;
+
+class DisplayErrorMessage extends React.PureComponent {
+  render() {
+    return (
+      <div className="box">
+        <h3 className="title">Server Request Error</h3>
+        <div className="notification is-danger">
+          <pre>{this.props.message}</pre>
+        </div>
+      </div>
+    );
+  }
+}
 
 class DisplayResult extends React.PureComponent {
   state = { showPrettier: false };

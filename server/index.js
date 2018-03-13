@@ -51,7 +51,6 @@ if (cluster.isMaster) {
   // Priority serve any static files.
   app.use(express.static(path.resolve(__dirname, '../ui/build')));
 
-  // Answer API requests.
   app.post('/api/minimize', async function(req, res) {
     const url = req.body.url;
     res.set('Content-Type', 'application/json');
