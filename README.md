@@ -7,7 +7,7 @@ to demonstrate use of `minimalcss` without having to install it locally.
 
 Open two terminals. First one:
 
-    npm start
+    yarn start
 
 Second one:
 
