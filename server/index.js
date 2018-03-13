@@ -67,7 +67,8 @@ if (cluster.isMaster) {
     // `puppeteerArgs: ['--no-sandbox', '--disable-setuid-sandbox']` and
     // that didn't work. Making an explicit puppeteer browser instance works.
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      timeout: 20 * 1000
     });
     const t0 = now();
     await minimalcss
